@@ -1,4 +1,4 @@
-#pragma once
+#include <Keypad.h>
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "Arduino.h"
@@ -6,9 +6,4 @@
 	#include "WProgram.h"
 #endif
 
-void sensorSetup();
-float readTemp();
-short readHall();
-short readLuz();
-short readSonido();
-
+void readInput();
