@@ -31,8 +31,7 @@ const unsigned short TIEMPO_7_SEC = 7000;
 // ============================================================
 //  VARIABLES GLOBALES DE ESTADO
 // ============================================================
-enum State
-{
+enum State {
   CONFIG = 0,
   INICIO = 1,
   MONITOR_PUERTAS = 2,
@@ -42,7 +41,6 @@ enum State
   ALARMA = 6
 };
 
-unsigned long estadoTiempo;
 bool claveCorrecta = false;
 bool sistemaBloqueado = false;
 bool botonPresionado = false;
@@ -56,7 +54,12 @@ short sonido = 0;
 // Contadores y entrada
 short contadorPuertas = 0;
 short contadorAlarmas = 0;
+short contadorKeypad = 0;
 char tecla = '\0';
+char claveKeypad[4] = {'1', '2', '3', 'A'};
+char entradaKeypad[4];
+unsigned short aciertos = 0;
+unsigned short intentos = 0;
 
 // ============================================================
 //  KEYPAD
@@ -72,11 +75,11 @@ byte rowPins[ROWS] = {9, 8, 7, 6};
 byte colPins[COLS] = {5, 4, 3, 2};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
+
 // ============================================================
 //  LECTURA DE SENSORES
 // ============================================================
-float readTemp()
-{
+float readTemp() {
   int Vo = analogRead(PIN_TEMP);
   int R1 = 10000;
   float R2 = R1 * (1023.0 / (float)Vo - 1.0);
@@ -91,8 +94,7 @@ short readHall() { return analogRead(PIN_HALL); }
 short readLuz() { return analogRead(PIN_LUZ); }
 short readSonido() { return analogRead(PIN_SONIDO); }
 
-void sensorSetup()
-{
+void sensorSetup() {
   pinMode(PIN_TEMP, INPUT);
   pinMode(PIN_HALL, INPUT);
   pinMode(PIN_LUZ, INPUT);
@@ -103,38 +105,58 @@ void sensorSetup()
   digitalWrite(LED_RED, LOW);
 }
 
+
+// ============================================================
+//  TAREAS ASÍNCRONAS
+// ============================================================
+
+AsyncTask task_2_sec(TIEMPO_2_SEC, false);
+AsyncTask task_3_sec(TIEMPO_3_SEC, false);
+AsyncTask task_4_sec(TIEMPO_4_SEC, false);
+AsyncTask task_5_sec(TIEMPO_5_SEC, false);
+AsyncTask task_7_sec(TIEMPO_7_SEC, false);
+
+
 // ============================================================
 //  MÁQUINA DE ESTADOS - CALLBACKS
 // ============================================================
-void onEnterCONFIG() { Serial.println("Estado: CONFIG - Cargando EEPROM"); }
-void onEnterINICIO()
-{
+void onEnterCONFIG() { 
+  Serial.println("Estado: CONFIG - Cargando EEPROM"); 
+}
+
+void onEnterINICIO() {
   Serial.println("Estado: INICIO - Teclado/RFID activo");
   claveCorrecta = false;
   sistemaBloqueado = false;
 }
-void onEnterMONITOR_PUERTAS()
-{
+
+void onEnterMONITOR_PUERTAS() {
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
   contadorPuertas = 0;
-  estadoTiempo = millis();
+  // estadoTiempo = millis();
 }
-void onEnterGESTION() { Serial.println("Estado: GESTION - Configuración"); }
+
+void onEnterGESTION() { 
+  Serial.println("Estado: GESTION - Configuración"); 
+}
+
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
-  estadoTiempo = millis();
+  //estadoTiempo = millis();
   digitalWrite(LED_RED, HIGH);
 }
+
 void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
-  estadoTiempo = millis();
+  //estadoTiempo = millis();
 }
+
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
-  estadoTiempo = millis();
+  //estadoTiempo = millis();
   contadorAlarmas++;
   tone(BUZZER_PIN, 1000, 500);
 }
@@ -144,45 +166,25 @@ void onEnterALARMA()
 // ============================================================
 void setupStateMachine(StateMachine &sm)
 {
-  sm.AddTransition(CONFIG, INICIO,
-                   []
-                   { return botonPresionado; });
-  sm.AddTransition(INICIO, CONFIG,
-                   []
-                   { return botonPresionado; });
-  sm.AddTransition(INICIO, MONITOR_AMBIENTAL,
-                   []
-                   { return claveCorrecta; });
-  sm.AddTransition(INICIO, BLOQUEO,
-                   []
-                   { return sistemaBloqueado; });
-  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,
-                   []
-                   { return (millis() - estadoTiempo) >= TIEMPO_2_SEC; });
-  sm.AddTransition(MONITOR_PUERTAS, ALARMA,
-                   []
-                   { return contadorPuertas >= 3; });
-  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS,
-                   []
-                   { return (millis() - estadoTiempo) >= TIEMPO_5_SEC; });
-  sm.AddTransition(MONITOR_AMBIENTAL, ALARMA,
-                   []
-                   { return (temperatura > 24 || luz > 400); });
-  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL,
-                   []
-                   { return (millis() - estadoTiempo) >= TIEMPO_3_SEC; });
-  sm.AddTransition(ALARMA, MONITOR_PUERTAS,
-                   []
-                   { return (millis() - estadoTiempo) >= TIEMPO_4_SEC; });
-  sm.AddTransition(ALARMA, GESTION,
-                   []
-                   { return contadorAlarmas >= 3; });
-  sm.AddTransition(GESTION, INICIO,
-                   []
-                   { return tecla == '*'; });
-  sm.AddTransition(BLOQUEO, INICIO,
-                   []
-                   { return (millis() - estadoTiempo) >= TIEMPO_7_SEC; });
+  sm.AddTransition(CONFIG, INICIO, [] { return botonPresionado; });
+
+  sm.AddTransition(INICIO, CONFIG, [] { return !botonPresionado; });
+  sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
+  sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
+
+  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return task_2_sec.IsExpired(); });
+  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3; });
+
+  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return task_5_sec.IsExpired(); });
+  sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 || luz > 400); });
+
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return task_3_sec.IsExpired(); });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return task_4_sec.IsExpired(); });
+  sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
+
+  sm.AddTransition(GESTION, INICIO, [] { return tecla == '*'; });
+  
+  sm.AddTransition(BLOQUEO, INICIO, [] { return task_7_sec.IsExpired(); });
 
   sm.SetOnEntering(CONFIG, onEnterCONFIG);
   sm.SetOnEntering(INICIO, onEnterINICIO);
@@ -199,15 +201,42 @@ void setupStateMachine(StateMachine &sm)
 char readKeypadInput()
 {
   char key = keypad.getKey();
-  if (key)
-  {
-    Serial.println(key);
-    tecla = key;
-    if (key == '#')
-      claveCorrecta = true;
-    if (key == 'D')
-      sistemaBloqueado = true;
-  }
+
+    if (key) {
+      if (contadorKeypad < 4) {
+        entradaKeypad[contadorKeypad] = key;
+        contadorKeypad++;
+      }
+    }
+
+    if (contadorKeypad == 4) {
+      aciertos = 0;
+
+      for(int i = 0; i < 4; i++)  {
+        if(claveKeypad[i] == entradaKeypad[i]){
+          aciertos++;
+        }
+      }
+
+      if (aciertos == 4){
+        Serial.println("Clave correcta");
+        intentos = 0;
+        claveCorrecta = true;
+      } 
+      else {
+        intentos++;
+        if(intentos >= 3) {
+          Serial.println("SIS. BLOQUEADO");
+          sistemaBloqueado = true;
+          intentos = 0; 
+        } else {
+          Serial.println("Clave incorrecta");
+        }
+      }
+
+      contadorKeypad = 0;
+      Serial.println("Ingrese Clave:");
+    }
   return key;
 }
 
