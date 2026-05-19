@@ -4,6 +4,8 @@
 #include "StateMachineLib.h"
 #include <Keypad.h>
 #include "AsyncTaskLib.h"
+#include <LiquidCrystal.h>
+#include <EEPROM.h>
 // ============================================================
 //  DEFINICIONES DE HARDWARE
 // ============================================================
@@ -14,6 +16,12 @@
 #define LED_RED 10
 #define BUZZER_PIN 11
 #define BOTON_CONFIG 12
+#define rs 12
+#define en 11
+#define d4 5
+#define d5 4
+#define d6 3
+#define d7 2
 
 #define TEMP_HIGH 23
 #define TH_HALL 527
@@ -60,6 +68,7 @@ char claveKeypad[4] = {'1', '2', '3', 'A'};
 char entradaKeypad[4];
 unsigned short aciertos = 0;
 unsigned short intentos = 0;
+int EEAddress = 0;
 
 // ============================================================
 //  KEYPAD
@@ -249,6 +258,7 @@ void updateButtonState()
 //  SETUP Y LOOP PRINCIPAL
 // ============================================================
 StateMachine stateMachine(7, 13);
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup()
 {
@@ -256,6 +266,7 @@ void setup()
   sensorSetup();
   setupStateMachine(stateMachine);
   stateMachine.SetState(CONFIG, false, true);
+  lcd.begin(16, 2);
 }
 
 void loop()
