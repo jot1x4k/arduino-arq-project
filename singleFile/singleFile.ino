@@ -6,22 +6,34 @@
 #include "AsyncTaskLib.h"
 #include <LiquidCrystal.h>
 #include <EEPROM.h>
+#include <SPI.h>
+#include <MFRC522.h>
 // ============================================================
 //  DEFINICIONES DE HARDWARE
 // ============================================================
 #define PIN_TEMP A0
+
 #define PIN_HALL A1
+
 #define PIN_LUZ A2
+
 #define PIN_SONIDO A3
+
 #define LED_RED 10
+
 #define BUZZER_PIN 11
+
 #define BOTON_CONFIG 12
+
 #define rs 12
 #define en 11
 #define d4 5
 #define d5 4
 #define d6 3
 #define d7 2
+
+#define RST_PIN	9
+#define SS_PIN	53
 
 #define TEMP_HIGH 23
 #define TH_HALL 527
@@ -64,12 +76,16 @@ short contadorPuertas = 0;
 short contadorAlarmas = 0;
 short contadorKeypad = 0;
 char tecla = '\0';
-char claveKeypad[4] = {'1', '2', '3', 'A'};
 char entradaKeypad[4];
 unsigned short aciertos = 0;
 unsigned short intentos = 0;
 int EEAddress = 0;
 
+// Claves de acceso
+char claveKeypad[4] = {'1', '2', '3', 'A'};
+byte validKeyRFID[4] = { 0x0A, 0x32, 0xD6, 0x73 };
+
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 // ============================================================
 //  KEYPAD
 // ============================================================
@@ -119,11 +135,16 @@ void sensorSetup() {
 //  TAREAS ASÍNCRONAS
 // ============================================================
 
+// Tareas de temporizacion
 AsyncTask task_2_sec(TIEMPO_2_SEC, false);
 AsyncTask task_3_sec(TIEMPO_3_SEC, false);
 AsyncTask task_4_sec(TIEMPO_4_SEC, false);
 AsyncTask task_5_sec(TIEMPO_5_SEC, false);
 AsyncTask task_7_sec(TIEMPO_7_SEC, false);
+
+// Tarea de lectura de entradas
+AsyncTask task_read_RFID(500, true, readRFIDInput);
+AsyncTask task_read_keypad(100, true, readKeypadInput);
 
 
 // ============================================================
@@ -249,6 +270,20 @@ char readKeypadInput()
   return key;
 }
 
+void readRFIDInput()
+{
+  if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
+    byte* id = mfrc522.uid.uidByte;
+    if (memcmp(id, validKeyRFID, 4) == 0) {
+      Serial.println("RFID válido");
+      claveCorrecta = true;
+    } else {
+      Serial.println("RFID no reconocido");
+    }
+    mfrc522.PICC_HaltA();
+  }
+}
+
 void updateButtonState()
 {
   botonPresionado = (digitalRead(BOTON_CONFIG) == LOW);
@@ -266,6 +301,8 @@ void setup()
   sensorSetup();
   setupStateMachine(stateMachine);
   stateMachine.SetState(CONFIG, false, true);
+  SPI.begin();
+	mfrc522.PCD_Init();
   lcd.begin(16, 2);
 }
 
