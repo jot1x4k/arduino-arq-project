@@ -8,6 +8,7 @@
 #include <EEPROM.h>
 #include <SPI.h>
 #include <MFRC522.h>
+
 // ============================================================
 //  DEFINICIONES DE HARDWARE
 // ============================================================
@@ -86,6 +87,7 @@ char claveKeypad[4] = {'1', '2', '3', 'A'};
 byte validKeyRFID[4] = { 0x0A, 0x32, 0xD6, 0x73 };
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
+
 // ============================================================
 //  KEYPAD
 // ============================================================
@@ -198,7 +200,7 @@ void setupStateMachine(StateMachine &sm)
 {
   sm.AddTransition(CONFIG, INICIO, [] { return botonPresionado; });
 
-  sm.AddTransition(INICIO, CONFIG, [] { return !botonPresionado; });
+  sm.AddTransition(INICIO, CONFIG, [] { return tecla == '#'; });
   sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
