@@ -141,8 +141,13 @@ AsyncTask task_5_sec(5000, false);
 AsyncTask task_7_sec(7000, false);
 
 // Tarea de lectura de entradas
-AsyncTask task_read_RFID(500, true, readRFIDInput);
-AsyncTask task_read_keypad(100, true, readKeypadInput);
+AsyncTask task_7_sec(7000, false);
+
+// Tarea de lectura de entradas asíncrona
+void toggleLed() {
+  digitalWrite(LED_RED, !digitalRead(LED_RED));
+}
+AsyncTask task_led_blink(250, true, toggleLed);
 
 
 // ============================================================
@@ -158,13 +163,14 @@ void onEnterINICIO() {
   Serial.println("Estado: INICIO - Teclado/RFID activo");
   claveCorrecta = false;
   sistemaBloqueado = false;
-  task_read_RFID.Start();
-  task_read_keypad.Start();
+  tecla = '\0';
+  contadorKeypad = 0;
 }
 
 void onEnterMONITOR_PUERTAS() {
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
   contadorPuertas = 0;
+  task_2_sec.Start();
 }
 
 void onEnterGESTION() { 
@@ -174,7 +180,8 @@ void onEnterGESTION() {
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
-  ledBlink();
+  task_led_blink.Start();
+  task_7_sec.Start();
 }
 
 void onEnterMONITOR_AMBIENTAL()
@@ -182,24 +189,18 @@ void onEnterMONITOR_AMBIENTAL()
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
   temperatura = readTemp();
   luz = readLuz();
+  task_5_sec.Start();
 }
 
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
   contadorAlarmas++;
-  tone(BUZZER_PIN, 1000, 500);
+  tone(BUZZER_PIN, 1000); 
 
-  digitalWrite(LED_RED, HIGH);
-  task_100_ms.Start();
-  while (!task_100_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
-  digitalWrite(LED_RED, LOW);
-  task_200_ms.Start();
-  while (!task_200_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
+  task_led_blink.Start();
+  task_3_sec.Start();
+  task_4_sec.Start();
 }
 
 // Funciones de SALIDA
@@ -212,8 +213,6 @@ void onLeaveCONFIG() {
 
 void onLeaveINICIO() {
   Serial.println("Saliendo de INICIO - Desactivando entradas");
-  task_read_RFID.Stop();
-  task_read_keypad.Stop();
 }
 
 void onLeaveMONITOR_PUERTAS() { 
@@ -227,6 +226,9 @@ void onLeaveGESTION() {
 void onLeaveBLOQUEO() { 
   Serial.println("Saliendo de BLOQUEO - Reiniciando sistema"); 
   sistemaBloqueado = false;
+  intentos = 0;
+  task_led_blink.Stop();
+  digitalWrite(LED_RED, LOW);
 }
 void onLeaveMONITOR_AMBIENTAL() { 
   Serial.println("Saliendo de MONITOR_AMBIENTAL"); 
@@ -235,6 +237,8 @@ void onLeaveMONITOR_AMBIENTAL() {
 void onLeaveALARMA() { 
   Serial.println("Saliendo de ALARMA - Desactivando alarma"); 
   noTone(BUZZER_PIN);
+  task_led_blink.Stop();
+  digitalWrite(LED_RED, LOW);
 }
 
 // ============================================================
@@ -248,19 +252,19 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
-  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { task_2_sec.Start(); return task_2_sec.IsExpired(); });
+  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return task_2_sec.IsExpired(); });
   sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3; });
 
-  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { task_5_sec.Start(); return task_5_sec.IsExpired(); });
+  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return task_5_sec.IsExpired(); });
   sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 || luz > 400); });
 
-  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { task_3_sec.Start(); return task_3_sec.IsExpired(); });
-  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { task_4_sec.Start(); return task_4_sec.IsExpired(); });
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return task_3_sec.IsExpired(); });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return task_4_sec.IsExpired(); });
   sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
 
   sm.AddTransition(GESTION, INICIO, [] { return tecla == '*'; });
   
-  sm.AddTransition(BLOQUEO, INICIO, [] { task_7_sec.Start(); return task_7_sec.IsExpired(); });
+  sm.AddTransition(BLOQUEO, INICIO, [] { return task_7_sec.IsExpired(); });
 
   sm.SetOnEntering(CONFIG, onEnterCONFIG);
   sm.SetOnEntering(INICIO, onEnterINICIO);
@@ -287,6 +291,7 @@ char readKeypadInput()
   char key = keypad.getKey();
 
     if (key) {
+      tecla = key; 
       if (contadorKeypad < 4) {
         entradaKeypad[contadorKeypad] = key;
         contadorKeypad++;
@@ -343,19 +348,6 @@ void updateButtonState()
   botonPresionado = (digitalRead(BOTON_CONFIG) == LOW);
 }
 
-void ledBlink() {
-  digitalWrite(LED_RED, HIGH);
-  task_300_ms.Start();
-  while (!task_300_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
-  digitalWrite(LED_RED, LOW);
-  task_700_ms.Start();
-  while (!task_700_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
-}
-
 // ============================================================
 //  SETUP Y LOOP PRINCIPAL
 // ============================================================
@@ -375,8 +367,29 @@ void setup()
 
 void loop()
 {
-  readKeypadInput();
-  readRFIDInput();
+  State currentState = stateMachine.GetState();
+
+  if (currentState == INICIO || currentState == GESTION) {
+    readKeypadInput();
+    readRFIDInput();
+  }
+
+  if (currentState == MONITOR_PUERTAS) {
+    short currentHall = readHall();
+    short currentMic = readSonido();
+    if (currentHall < TH_HALL || currentMic > 300) {
+      contadorPuertas++;
+      Serial.println("Detectada apertura/sonido");
+      delay(300);
+    }
+  }
+
+  if (currentState == MONITOR_AMBIENTAL) {
+    temperatura = readTemp();
+    luz = readLuz();
+  }
+
+  task_led_blink.Update();
   updateButtonState();
 
   stateMachine.Update();
