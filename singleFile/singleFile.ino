@@ -103,6 +103,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 //  LECTURA DE SENSORES
 // ============================================================
 float readTemp() {
+  Serial.println("Temperatura: ");
   int Vo = analogRead(PIN_TEMP);
   int R1 = 10000;
   float R2 = R1 * (1023.0 / (float)Vo - 1.0);
@@ -110,12 +111,29 @@ float readTemp() {
   float c1 = 0.001129148, c2 = 0.000234125, c3 = 0.0000000876741;
   temperatura = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
   temperatura = temperatura - 273.15;
+  Serial.println(temperatura);
   return temperatura;
 }
 
-short readHall() { hall = analogRead(PIN_HALL); return hall; }
-short readLuz() { luz =  analogRead(PIN_LUZ); return luz; }
-short readSonido() { sonido = analogRead(PIN_SONIDO); return sonido; }
+short readHall() { 
+  Serial.println("Hall: ");
+  hall = analogRead(PIN_HALL); 
+  Serial.println(hall);
+  return hall; 
+}
+short readLuz() { 
+  Serial.println("Luz: ");
+  luz =  analogRead(PIN_LUZ); 
+  Serial.println(luz);
+  return luz; 
+}
+
+short readSonido() { 
+  Serial.println("Sonido: ");
+  sonido = analogRead(PIN_SONIDO); 
+  Serial.println(sonido);
+  return sonido; 
+}
 
 void sensorSetup() {
   pinMode(PIN_TEMP, INPUT);
@@ -175,6 +193,7 @@ void onEnterINICIO() {
 
 void onEnterMONITOR_PUERTAS() {
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
+  
   contadorPuertas = 0;
   task_readHall.Start();
   task_readSonido.Start();
@@ -195,15 +214,7 @@ void onEnterMONITOR_AMBIENTAL()
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
   
   task_readTemp.Start();
-  task_readTemp.Update();
-  Serial.print("TEMP: ");
-  Serial.println(temperatura);
-
   task_readLuz.Start();
-  task_readTemp.Update();
-  luz = readLuz();
-  Serial.print("LUZ: ");
-  Serial.println(luz);
 }
 
 void onEnterALARMA()
@@ -241,6 +252,8 @@ void onLeaveINICIO() {
 
 void onLeaveMONITOR_PUERTAS() { 
   Serial.println("Saliendo de MONITOR_PUERTAS"); 
+  task_readHall.Stop();
+  task_readSonido.Stop();
 }
 
 void onLeaveGESTION() { 
@@ -271,6 +284,30 @@ bool contar5Segundos() {
   return task_5_sec.IsExpired();
 }
 
+bool contar2Segundos() {
+  if (!task_2_sec.IsActive()) {
+    task_2_sec.Start();
+  }
+  task_2_sec.Update();
+  return task_2_sec.IsExpired();
+}
+
+bool contar3Segundos() {
+  if (!task_3_sec.IsActive()) {
+    task_3_sec.Start();
+  }
+  task_3_sec.Update();
+  return task_3_sec.IsExpired();
+}
+
+bool contar4Segundos() {
+  if (!task_4_sec.IsActive()) {
+    task_4_sec.Start();
+  }
+  task_4_sec.Update();
+  return task_4_sec.IsExpired();
+}
+
 // ============================================================
 //  CONFIGURACIÓN DE TRANSICIONES
 // ============================================================
@@ -282,14 +319,14 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
-  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { task_2_sec.Start(); return task_2_sec.IsExpired(); });
+  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return contar2Segundos(); });
   sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3; });
 
   sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
   sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 && luz < 800); });
 
-  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { task_3_sec.Start(); return task_3_sec.IsExpired(); });
-  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { task_4_sec.Start(); return task_4_sec.IsExpired(); });
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return contar3Segundos(); });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return contar4Segundos(); });
   sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
 
   sm.AddTransition(GESTION, INICIO, [] { return readKeypadInput() == '*'; });
