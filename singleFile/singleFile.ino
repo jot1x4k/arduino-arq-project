@@ -25,7 +25,7 @@
 
 #define BUZZER_PIN 8
 
-#define BOTON_CONFIG 7
+#define BOTON_CONFIG 13
 
 #define PIN_SERVO 4
 
@@ -67,6 +67,7 @@ float temperatura = 0;
 short hall = 0;
 short luz = 0;
 short sonido = 0;
+
 
 // Contadores y entrada
 short contadorPuertas = 0;
@@ -171,6 +172,9 @@ AsyncTask task_readLuz(700, true, readLuz);
 AsyncTask task_readSonido(700, true, readSonido);
 AsyncTask task_readHall(700, true, readHall);
 
+//Tareas output
+AsyncTask task_ledBlink(1000, false, ledBlink);
+
 
 // ============================================================
 //  MÁQUINA DE ESTADOS - CALLBACKS
@@ -193,6 +197,7 @@ void onEnterINICIO() {
 
 void onEnterMONITOR_PUERTAS() {
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
+  task_2_sec.Start();
   
   contadorPuertas = 0;
   task_readHall.Start();
@@ -206,12 +211,14 @@ void onEnterGESTION() {
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
-  ledBlink();
+  task_ledBlink.Start();
+  task_7_sec.Start();
 }
 
 void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
+  task_5_sec.Start();
   
   task_readTemp.Start();
   task_readLuz.Start();
@@ -220,6 +227,8 @@ void onEnterMONITOR_AMBIENTAL()
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
+  task_3_sec.Start();
+  task_4_sec.Start();
   contadorAlarmas++;
   tone(BUZZER_PIN, 1000, 500);
 
@@ -276,36 +285,35 @@ void onLeaveALARMA() {
 }
 
 // Funciones contadoras de tiempo
+// Usamos GetElapsedTime() >= Interval porque Start() NO limpia _isExpired,
+// lo que causa que Update() e IsExpired() devuelvan true inmediatamente
+// al re-entrar a un estado.
 bool contar5Segundos() {
-  if (!task_5_sec.IsActive()) {
-    task_5_sec.Start();
-  }
-  task_5_sec.Update();
-  return task_5_sec.IsExpired();
+  return task_5_sec.GetElapsedTime() >= task_5_sec.Interval;
 }
 
 bool contar2Segundos() {
-  if (!task_2_sec.IsActive()) {
-    task_2_sec.Start();
-  }
-  task_2_sec.Update();
-  return task_2_sec.IsExpired();
+  return task_2_sec.GetElapsedTime() >= task_2_sec.Interval;
 }
 
 bool contar3Segundos() {
-  if (!task_3_sec.IsActive()) {
-    task_3_sec.Start();
-  }
-  task_3_sec.Update();
-  return task_3_sec.IsExpired();
+  return task_3_sec.GetElapsedTime() >= task_3_sec.Interval;
 }
 
 bool contar4Segundos() {
-  if (!task_4_sec.IsActive()) {
-    task_4_sec.Start();
-  }
-  task_4_sec.Update();
-  return task_4_sec.IsExpired();
+  return task_4_sec.GetElapsedTime() >= task_4_sec.Interval;
+}
+
+bool contar7Segundos() {
+  return task_7_sec.GetElapsedTime() >= task_7_sec.Interval;
+}
+
+bool contar300ms() {
+  return task_300_ms.GetElapsedTime() >= task_300_ms.Interval;
+}
+
+bool contar700ms() {
+  return task_700_ms.GetElapsedTime() >= task_700_ms.Interval;
 }
 
 // ============================================================
@@ -331,7 +339,7 @@ void setupStateMachine(StateMachine &sm)
 
   sm.AddTransition(GESTION, INICIO, [] { return readKeypadInput() == '*'; });
   
-  sm.AddTransition(BLOQUEO, INICIO, [] { task_7_sec.Start(); return task_7_sec.IsExpired(); });
+  sm.AddTransition(BLOQUEO, INICIO, [] { return contar7Segundos(); });
 
   sm.SetOnEntering(CONFIG, onEnterCONFIG);
   sm.SetOnEntering(INICIO, onEnterINICIO);
@@ -417,15 +425,11 @@ void updateButtonState()
 
 void ledBlink() {
   digitalWrite(LED_RED, HIGH);
-  task_300_ms.Start();
-  while (!task_300_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
+  Serial.println("LED ON");
+  delay(700);
   digitalWrite(LED_RED, LOW);
-  task_700_ms.Start();
-  while (!task_700_ms.IsExpired()) {
-    // Espera activa para el parpadeo
-  }
+  Serial.println("LED OFF"); 
+  delay(300);
 }
 
 // ============================================================
@@ -439,7 +443,7 @@ void setup()
   Serial.begin(9600);
   sensorSetup();
   setupStateMachine(stateMachine);
-  stateMachine.SetState(CONFIG, false, true);
+  stateMachine.SetState(BLOQUEO, false, true);
   SPI.begin();
 	mfrc522.PCD_Init();
   myservo.attach(PIN_SERVO);
