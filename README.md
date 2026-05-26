@@ -7,6 +7,9 @@ Se trata de un proyecto de Arduino que busca monitorizar el ambiente de una sala
 
 El sistema funciona mediante una automata finita que cambia de un estado a otro a partir de condicionales que pueden requerir la intervencion del usuario, o que pueden darse gracias a las mediciones de los distintos sensores con los que se trabaja.
 
+### Grafico de la automata diseñada
+<img src = "maquina.png">
+
 ## Hardware
 
 El proyecto se armo con los siguientes elementos:
