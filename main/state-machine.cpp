@@ -1,0 +1,139 @@
+#include "state-machine.h"
+#include "inputs.h"
+#include "sensors.h"
+#include "tasks.h"
+#include <EEPROM.h>
+
+// Funciones de ENTRADA
+void onEnterCONFIG() { 
+  Serial.println("Estado: CONFIG - Cargando EEPROM"); 
+}
+
+void onEnterINICIO() {
+  contadorKeypad = 0;
+  Serial.println("Estado: INICIO - Teclado/RFID activo");
+  claveCorrecta = false;
+  sistemaBloqueado = false;
+  Serial.print("Ingrese clave: ");
+  task_read_RFID.Start();
+  task_read_keypad.Start();
+}
+
+void onEnterMONITOR_PUERTAS() {
+  Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
+  task_2_sec.Start();
+  
+  contadorPuertas = 0;
+  task_read_hall.Start();
+  task_read_sonido.Start();
+}
+
+void onEnterGESTION() { 
+  Serial.println("Estado: GESTION - Configuración"); 
+}
+
+void onEnterBLOQUEO()
+{
+  Serial.println("Estado: BLOQUEO - Sistema bloqueado");
+  task_blink_led.Start();
+  task_7_sec.Start();
+}
+
+void onEnterMONITOR_AMBIENTAL()
+{
+  Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
+  task_5_sec.Start();
+  
+  task_read_temp.Start();
+  task_read_luz.Start();
+}
+
+void onEnterALARMA()
+{
+  Serial.println("Estado: ALARMA - Activada");
+  task_3_sec.Start();
+  task_4_sec.Start();
+  contadorAlarmas++;
+  tone(BUZZER_PIN, 1000, 500);
+  task_blink_led.Start();
+}
+
+// Funciones de SALIDA
+void onLeaveCONFIG() { 
+  Serial.println("Saliendo de CONFIG - Guardando en EEPROM"); 
+  for (int i = 0; i < 4; i++) {
+    EEPROM.write(EEAddress + i, claveKeypad[i]);
+  }
+}
+
+void onLeaveINICIO() {
+  contadorKeypad = 0;
+  Serial.println("Saliendo de INICIO - Desactivando entradas");
+  task_read_RFID.Stop();
+  task_read_keypad.Stop();
+}
+
+void onLeaveMONITOR_PUERTAS() { 
+  Serial.println("Saliendo de MONITOR_PUERTAS"); 
+  task_read_hall.Stop();
+  task_read_sonido.Stop();
+}
+
+void onLeaveGESTION() { 
+  Serial.println("Saliendo de GESTION"); 
+}
+
+void onLeaveBLOQUEO() { 
+  Serial.println("Saliendo de BLOQUEO - Reiniciando sistema"); 
+  sistemaBloqueado = false;
+}
+void onLeaveMONITOR_AMBIENTAL() { 
+  Serial.println("Saliendo de MONITOR_AMBIENTAL"); 
+  task_read_temp.Stop();
+  task_read_luz.Stop();
+}
+
+void onLeaveALARMA() { 
+  Serial.println("Saliendo de ALARMA - Desactivando alarma"); 
+  noTone(BUZZER_PIN);
+}
+
+// Configuración
+void setupStateMachine(StateMachine &sm)
+{
+  sm.AddTransition(CONFIG, INICIO, [] { return botonPresionado; });
+
+  sm.AddTransition(INICIO, CONFIG, [] { return readKeypadInput() == '#'; });
+  sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
+  sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
+
+  sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return contar2Segundos(); });
+  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3; });
+
+  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
+  sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 && luz < 800); });
+
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return contar3Segundos(); });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return contar4Segundos(); });
+  sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
+
+  sm.AddTransition(GESTION, INICIO, [] { return readKeypadInput() == '*'; });
+  
+  sm.AddTransition(BLOQUEO, INICIO, [] { return contar7Segundos(); });
+
+  sm.SetOnEntering(CONFIG, onEnterCONFIG);
+  sm.SetOnEntering(INICIO, onEnterINICIO);
+  sm.SetOnEntering(MONITOR_PUERTAS, onEnterMONITOR_PUERTAS);
+  sm.SetOnEntering(GESTION, onEnterGESTION);
+  sm.SetOnEntering(BLOQUEO, onEnterBLOQUEO);
+  sm.SetOnEntering(MONITOR_AMBIENTAL, onEnterMONITOR_AMBIENTAL);
+  sm.SetOnEntering(ALARMA, onEnterALARMA);
+
+  sm.SetOnLeaving(CONFIG, onLeaveCONFIG);
+  sm.SetOnLeaving(INICIO, onLeaveINICIO);
+  sm.SetOnLeaving(MONITOR_PUERTAS, onLeaveMONITOR_PUERTAS);
+  sm.SetOnLeaving(GESTION, onLeaveGESTION);
+  sm.SetOnLeaving(BLOQUEO, onLeaveBLOQUEO);
+  sm.SetOnLeaving(MONITOR_AMBIENTAL, onLeaveMONITOR_AMBIENTAL);
+  sm.SetOnLeaving(ALARMA, onLeaveALARMA);
+}

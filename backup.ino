@@ -29,12 +29,12 @@
 
 #define PIN_SERVO 4
 
-#define rs 12
-#define en 11
-#define d4 5
-#define d5 4
-#define d6 3
-#define d7 2
+#define LCD_RS 12
+#define LCD_EN 11
+#define LCD_D4 5
+#define LCD_D5 4
+#define LCD_D6 3
+#define LCD_D7 2
 
 #define RST_PIN	9
 #define SS_PIN	6
@@ -56,7 +56,7 @@ enum State {
   ALARMA = 6
 };
 
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 Servo myservo;
 
