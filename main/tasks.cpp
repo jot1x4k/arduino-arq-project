@@ -15,12 +15,12 @@ AsyncTask task_5_sec(5000, false);
 AsyncTask task_7_sec(7000, false);
 
 // Tarea de lectura de entradas
-AsyncTask task_read_RFID(500, true, [](){ readRFIDInput(); });
+AsyncTask task_read_RFID(100, true, [](){ readRFIDInput(); });
 AsyncTask task_read_keypad(100, true, [](){ readKeypadInput(); });
-AsyncTask task_read_temp(700, true, [](){ readTemp(); });
-AsyncTask task_read_luz(700, true, [](){ readLuz(); });
-AsyncTask task_read_sonido(700, true, [](){ readSonido(); });
-AsyncTask task_read_hall(700, true, [](){ readHall(); });
+AsyncTask task_read_temp(100, true, [](){ readTemp(); });
+AsyncTask task_read_luz(100, true, [](){ readLuz(); });
+AsyncTask task_read_sonido(100, true, [](){ readSonido(); });
+AsyncTask task_read_hall(100, true, [](){ readHall(); });
 
 //Tareas output
 AsyncTask task_blink_led(1000, true, blinkLed);

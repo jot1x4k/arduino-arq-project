@@ -22,10 +22,16 @@ void onEnterINICIO() {
 void onEnterMONITOR_PUERTAS() {
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
   task_2_sec.Start();
-  
-  contadorPuertas = 0;
   task_read_hall.Start();
   task_read_sonido.Start();
+
+  contadorPuertas++;
+
+  while (!contar2Segundos()) {
+    task_read_hall.Update();
+    task_read_sonido.Update();
+  }
+
 }
 
 void onEnterGESTION() { 
@@ -43,9 +49,13 @@ void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
   task_5_sec.Start();
-  
   task_read_temp.Start();
   task_read_luz.Start();
+
+  while (!contar5Segundos()) {
+    task_read_luz.Update();
+    task_read_temp.Update();
+  }
 }
 
 void onEnterALARMA()
@@ -108,7 +118,7 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
   sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return contar2Segundos(); });
-  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3; });
+  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3 && sonido < SOUND_HIGH; });
 
   sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
   sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 && luz < 800); });
