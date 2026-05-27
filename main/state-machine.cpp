@@ -24,12 +24,17 @@ void onEnterMONITOR_PUERTAS() {
   task_2_sec.Start();
   task_read_hall.Start();
   task_read_sonido.Start();
-
   contadorPuertas++;
+  Serial.println("Se ha entrado a puertas " + String(contadorPuertas) + " veces");
 
   while (!contar2Segundos()) {
     task_read_hall.Update();
     task_read_sonido.Update();
+
+    if (contadorPuertas > 3 && sonido > SOUND_HIGH) {
+      intruso = true;
+      break;
+    }
   }
 
 }
@@ -61,9 +66,16 @@ void onEnterMONITOR_AMBIENTAL()
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
-  task_3_sec.Start();
-  task_4_sec.Start();
+  contadorPuertas = 0;
   contadorAlarmas++;
+  Serial.println("INTRUSO ES: " + String(intruso));
+  if (intruso) {
+    task_4_sec.Start();
+    Serial.println("Viniendo de PUERTAS - CONTAR 4 SEGUNDOS");
+  } else {
+    task_3_sec.Start();
+    Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
+  }
   tone(BUZZER_PIN, 1000, 500);
   task_blink_led.Start();
 }
@@ -105,6 +117,7 @@ void onLeaveMONITOR_AMBIENTAL() {
 
 void onLeaveALARMA() { 
   Serial.println("Saliendo de ALARMA - Desactivando alarma"); 
+  intruso = false;
   noTone(BUZZER_PIN);
 }
 
@@ -117,14 +130,14 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
+  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return intruso; }); 
   sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return contar2Segundos(); });
-  sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return contadorPuertas >= 3 && sonido < SOUND_HIGH; });
 
-  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
   sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 && luz < 800); });
+  sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
 
-  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return contar3Segundos(); });
-  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return contar4Segundos(); });
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return !intruso && contar3Segundos(); });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return intruso && contar4Segundos(); });
   sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
 
   sm.AddTransition(GESTION, INICIO, [] { return readKeypadInput() == '*'; });

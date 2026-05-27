@@ -25,7 +25,7 @@
 #define TEMP_HIGH 23
 #define TH_HALL 527
 #define LIGHT_HIGH 100
-#define SOUND_HIGH 40 
+#define SOUND_HIGH 97 
 
 enum State {
   CONFIG = 0,

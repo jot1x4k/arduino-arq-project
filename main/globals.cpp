@@ -8,6 +8,7 @@ short sonido = 0;
 bool claveCorrecta = false;
 bool sistemaBloqueado = false;
 bool botonPresionado = false;
+bool intruso = false;
 int EEAddress = 0;
 
 short contadorPuertas = 0;
