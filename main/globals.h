@@ -32,6 +32,8 @@ extern char entradaKeypad[4];
 extern unsigned short aciertos;
 extern unsigned short intentos;
 
+extern unsigned short puertaServo;
+
 extern char claveKeypad[4];
 extern byte validKeyRFID[4];
 

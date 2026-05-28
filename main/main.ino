@@ -28,7 +28,6 @@ void setup()
 
 void loop()
 {
-  myservo.write(180);
   stateMachine.Update();
   updateButtonState();
   task_read_RFID.Update();

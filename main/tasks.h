@@ -23,6 +23,7 @@ extern AsyncTask task_read_hall;
 
 extern AsyncTask task_blink_led;
 
+bool contar100ms();
 bool contar300ms();
 bool contar700ms();
 bool contar2Segundos();

@@ -9,5 +9,6 @@ short readHall();
 short readLuz();
 short readSonido();
 void blinkLed();
+void rotateServo(unsigned short direction);
 
 #endif

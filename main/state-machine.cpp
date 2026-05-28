@@ -51,8 +51,10 @@ void onEnterGESTION() {
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
+
   task_blink_led.Start();
   task_7_sec.Start();
+  rotateServo(180);
 
   while(!contar7Segundos()) {
     task_blink_led.Update();
@@ -66,9 +68,21 @@ void onEnterMONITOR_AMBIENTAL()
   task_read_temp.Start();
   task_read_luz.Start();
 
+  if(puertaServo == 0) {
+    rotateServo(0);
+  }
+
+  task_3_sec.Start();
+
+
   while (!contar5Segundos()) {
     task_read_luz.Update();
     task_read_temp.Update();
+    if(contar3Segundos() && puertaServo == 0) {
+    rotateServo(180);
+    rotateServo(180);
+    puertaServo++;
+    }
   }
 }
 
@@ -118,6 +132,8 @@ void onLeaveGESTION() {
 void onLeaveBLOQUEO() { 
   Serial.println("Saliendo de BLOQUEO - Reiniciando sistema"); 
   sistemaBloqueado = false;
+
+  rotateServo(0);
 }
 void onLeaveMONITOR_AMBIENTAL() { 
   Serial.println("Saliendo de MONITOR_AMBIENTAL"); 

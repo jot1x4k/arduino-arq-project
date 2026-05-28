@@ -60,3 +60,23 @@ void blinkLed() {
     Serial.println("LED OFF");
   }
 }
+
+void rotateServo(unsigned short direction) {
+  task_100_ms.Start();
+  if(direction == 0) {
+    myservo.write(0);
+  }
+
+  if (direction == 180)
+  {
+    myservo.write(180);
+  } 
+  
+  task_300_ms.Start();
+  while (!contar300ms())
+  {
+    if(contar100ms()) {
+      myservo.write(90);
+    }
+  }
+}
