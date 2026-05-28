@@ -10,7 +10,6 @@
 #include "tasks.h"
 
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-MFRC522 mfrc522(SS_PIN, RST_PIN);
 StateMachine stateMachine(7, 13);
 
 void setup()
@@ -32,4 +31,6 @@ void loop()
   myservo.write(180);
   stateMachine.Update();
   updateButtonState();
+  task_read_RFID.Update();
+  task_read_keypad.Update();
 }

@@ -14,16 +14,20 @@ char keys[ROWS][COLS] = {
 byte rowPins[ROWS] = {27, 29, 31, 33}; 
 byte colPins[COLS] = {35, 37, 39, 41}; 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 char readKeypadInput()
 {
   char key = keypad.getKey();
 
   if (key) {
+    tecla = key;
     Serial.print(key);
-    if (contadorKeypad < 4) {
-      entradaKeypad[contadorKeypad] = key;
-      contadorKeypad++;
+    if (key != '#' && key != '*') {
+      if (contadorKeypad < 4) {
+        entradaKeypad[contadorKeypad] = key;
+        contadorKeypad++;
+      }
     }
   }
   
@@ -60,12 +64,19 @@ char readKeypadInput()
 void readRFIDInput()
 {
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
+    Serial.print(F("[RFID] Código UID detectado:"));
     byte* id = mfrc522.uid.uidByte;
-    if (memcmp(id, validKeyRFID, 4) == 0) {
-      Serial.println("RFID válido");
+    for (byte i = 0; i < mfrc522.uid.size; i++) {
+      Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+      Serial.print(mfrc522.uid.uidByte[i], HEX);
+    }
+    Serial.println();
+    
+    if (mfrc522.uid.size >= 4 && memcmp(id, validKeyRFID, 4) == 0) {
+      Serial.println(F("RFID válido"));
       claveCorrecta = true;
     } else {
-      Serial.println("RFID no reconocido");
+      Serial.println(F("RFID no reconocido"));
     }
     mfrc522.PICC_HaltA();
   }

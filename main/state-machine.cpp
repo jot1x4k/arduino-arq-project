@@ -10,13 +10,16 @@ void onEnterCONFIG() {
 }
 
 void onEnterINICIO() {
+  tecla = 0;
   contadorKeypad = 0;
   Serial.println("Estado: INICIO - Teclado/RFID activo");
   claveCorrecta = false;
   sistemaBloqueado = false;
-  Serial.print("Ingrese clave: ");
+
   task_read_RFID.Start();
   task_read_keypad.Start();
+
+  Serial.print("Ingrese clave: ");
 }
 
 void onEnterMONITOR_PUERTAS() {
@@ -41,6 +44,8 @@ void onEnterMONITOR_PUERTAS() {
 
 void onEnterGESTION() { 
   Serial.println("Estado: GESTION - Configuración"); 
+  tecla = 0;
+  task_read_keypad.Start();
 }
 
 void onEnterBLOQUEO()
@@ -103,6 +108,7 @@ void onLeaveMONITOR_PUERTAS() {
 
 void onLeaveGESTION() { 
   Serial.println("Saliendo de GESTION"); 
+  task_read_keypad.Stop();
 }
 
 void onLeaveBLOQUEO() { 
@@ -126,7 +132,13 @@ void setupStateMachine(StateMachine &sm)
 {
   sm.AddTransition(CONFIG, INICIO, [] { return botonPresionado; });
 
-  sm.AddTransition(INICIO, CONFIG, [] { return readKeypadInput() == '#'; });
+  sm.AddTransition(INICIO, CONFIG, [] {
+    if (tecla == '#') {
+      tecla = 0;
+      return true;
+    }
+    return false;
+  });
   sm.AddTransition(INICIO, MONITOR_AMBIENTAL, [] { return claveCorrecta; });
   sm.AddTransition(INICIO, BLOQUEO, [] { return sistemaBloqueado; });
 
@@ -140,7 +152,13 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return intruso && contar4Segundos(); });
   sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
 
-  sm.AddTransition(GESTION, INICIO, [] { return readKeypadInput() == '*'; });
+  sm.AddTransition(GESTION, INICIO, [] {
+    if (tecla == '*') {
+      tecla = 0;
+      return true;
+    }
+    return false;
+  });
   
   sm.AddTransition(BLOQUEO, INICIO, [] { return contar7Segundos(); });
 

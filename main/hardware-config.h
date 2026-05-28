@@ -20,7 +20,7 @@
 #define LCD_D7 2
 
 #define RST_PIN	9
-#define SS_PIN	6
+#define SS_PIN	53
 
 #define TEMP_HIGH 23
 #define TH_HALL 527
