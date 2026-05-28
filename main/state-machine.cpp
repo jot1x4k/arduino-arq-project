@@ -53,6 +53,10 @@ void onEnterBLOQUEO()
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
   task_blink_led.Start();
   task_7_sec.Start();
+
+  while(!contar7Segundos()) {
+    task_blink_led.Update();
+  }
 }
 
 void onEnterMONITOR_AMBIENTAL()

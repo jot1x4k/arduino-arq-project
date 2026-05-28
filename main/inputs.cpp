@@ -77,6 +77,12 @@ void readRFIDInput()
       claveCorrecta = true;
     } else {
       Serial.println(F("RFID no reconocido"));
+      intentos++;
+      if(intentos >= 3) {
+        Serial.println("SIS. BLOQUEADO");
+        sistemaBloqueado = true;
+        intentos = 0;
+      }
     }
     mfrc522.PICC_HaltA();
   }
