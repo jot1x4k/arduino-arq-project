@@ -16,6 +16,7 @@ extern AsyncTask task_7_sec;
 
 extern AsyncTask task_read_RFID;
 extern AsyncTask task_read_keypad;
+extern AsyncTask task_read_keypad_gestion;
 extern AsyncTask task_read_temp;
 extern AsyncTask task_read_luz;
 extern AsyncTask task_read_sonido;

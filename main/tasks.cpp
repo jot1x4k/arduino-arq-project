@@ -17,6 +17,7 @@ AsyncTask task_7_sec(7000, false);
 // Tarea de lectura de entradas
 AsyncTask task_read_RFID(100, true, [](){ readRFIDInput(); });
 AsyncTask task_read_keypad(100, true, [](){ readKeypadInput(); });
+AsyncTask task_read_keypad_gestion(100, true, [](){ readKeypadGestion(); });
 AsyncTask task_read_temp(100, true, [](){ readTemp(); });
 AsyncTask task_read_luz(100, true, [](){ readLuz(); });
 AsyncTask task_read_sonido(100, true, [](){ readSonido(); });

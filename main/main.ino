@@ -23,7 +23,7 @@ void setup()
   myservo.attach(PIN_SERVO);
   lcd.begin(16, 2);
   
-  stateMachine.SetState(INICIO, false, true);
+  stateMachine.SetState(GESTION, false, true);
 }
 
 void loop()
@@ -32,4 +32,5 @@ void loop()
   updateButtonState();
   task_read_RFID.Update();
   task_read_keypad.Update();
+  task_read_keypad_gestion.Update();
 }

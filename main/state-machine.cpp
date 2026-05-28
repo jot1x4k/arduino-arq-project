@@ -45,7 +45,7 @@ void onEnterMONITOR_PUERTAS() {
 void onEnterGESTION() { 
   Serial.println("Estado: GESTION - Configuración"); 
   tecla = 0;
-  task_read_keypad.Start();
+  task_read_keypad_gestion.Start();
 }
 
 void onEnterBLOQUEO()

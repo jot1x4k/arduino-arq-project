@@ -61,6 +61,16 @@ char readKeypadInput()
   return key;
 }
 
+char readKeypadGestion() {
+  char key = keypad.getKey();
+
+  if (key) {
+    tecla = key;
+    Serial.print(key);
+  }
+  return key;
+}
+
 void readRFIDInput()
 {
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {

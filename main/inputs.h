@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 char readKeypadInput();
+char readKeypadGestion();
 void readRFIDInput();
 void updateButtonState();
 
