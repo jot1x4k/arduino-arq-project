@@ -11,6 +11,9 @@ bool botonPresionado = false;
 bool intruso = false;
 int EEAddress = 0;
 
+int TEMP_HIGH = 23;
+int LIGHT_HIGH = 100;
+
 short contadorPuertas = 0;
 short contadorAlarmas = 0;
 short contadorKeypad = 0;

@@ -3,6 +3,7 @@
 #include "sensors.h"
 #include "tasks.h"
 #include <EEPROM.h>
+#include <stdlib.h>
 
 // Funciones de ENTRADA
 void onEnterCONFIG() { 
@@ -44,8 +45,74 @@ void onEnterMONITOR_PUERTAS() {
 
 void onEnterGESTION() { 
   Serial.println("Estado: GESTION - Configuración"); 
-  tecla = 0;
+
+  Serial.println("A. Cambiar Umbrales");
+  Serial.println("B. Cambiar Acceso");
+  Serial.println("*. Volver a INICIO");
+  Serial.println("Ingrese opción: ");
+
   task_read_keypad_gestion.Start();
+  char key = 0;
+  while (true) {
+    key = readKeypadGestion();
+    if (key) {
+      break;
+    }
+  }
+  tecla = key;
+  Serial.println();
+
+  switch (tecla)
+  {
+  case 'A':
+    Serial.println("Opción A - Cambiar umbrales");
+    Serial.println("Ingrese nuevo umbral de temperatura: ");
+    while (true) {
+      char key = readKeypadGestion();
+      if (key && key != '#' && key != '*') {
+        Serial.print(key);
+        task_2_sec.Start();
+        String input = "";
+        while (!contar2Segundos)
+        {
+          input += key;
+        }
+        
+        if(contar2Segundos()) {
+          TEMP_HIGH = strtol(input.c_str(), NULL, 10);
+          Serial.println("Nuevo TEMP: " + String(TEMP_HIGH));
+          break;
+        }
+        break;
+      }
+    }
+    break;
+
+  case 'B':
+    Serial.println("Opción B - Cambiar acceso");
+    Serial.println("Ingrese nueva clave de 4 dígitos:");
+    for (int i = 0; i < 4; i++) {
+      while (true) {
+        char key = readKeypadGestion();
+        if (key && key != '#' && key != '*') {
+          claveKeypad[i] = key;
+          Serial.print("*");
+          break;
+        }
+      }
+    }
+    Serial.println("\nClave actualizada");
+    break;
+  
+  case '*':
+    Serial.println("Volviendo a INICIO");
+    break;
+  
+  default:
+    Serial.println("Opción no válida");
+    stateMachine.SetState(GESTION, false, true);
+    break;
+  }
 }
 
 void onEnterBLOQUEO()

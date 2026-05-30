@@ -32,6 +32,10 @@ extern char entradaKeypad[4];
 extern unsigned short aciertos;
 extern unsigned short intentos;
 
+
+extern int TEMP_HIGH;
+extern int LIGHT_HIGH;
+
 extern unsigned short puertaServo;
 
 extern char claveKeypad[4];

@@ -22,10 +22,8 @@
 #define RST_PIN	9
 #define SS_PIN	53
 
-#define TEMP_HIGH 23
 #define TH_HALL 527
-#define LIGHT_HIGH 100
-#define SOUND_HIGH 97 
+#define SOUND_HIGH 97
 
 enum State {
   CONFIG = 0,
