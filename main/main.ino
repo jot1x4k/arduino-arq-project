@@ -22,7 +22,7 @@ void setup()
   myservo.attach(PIN_SERVO);
   lcd.begin(16, 2);
   
-  stateMachine.SetState(ALARMA, false, true);
+  stateMachine.SetState(INICIO, false, true);
 }
 
 void loop()

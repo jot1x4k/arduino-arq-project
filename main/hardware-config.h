@@ -9,7 +9,7 @@
 #define PIN_SONIDO A3
 #define LED_RED 10
 #define BUZZER_PIN 8
-#define BOTON_CONFIG 13
+#define BOTON_CONFIG 13 
 #define PIN_SERVO 7
 
 #define LCD_RS 12

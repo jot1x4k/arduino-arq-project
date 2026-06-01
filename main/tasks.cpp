@@ -25,10 +25,15 @@ AsyncTask task_read_hall(100, true, [](){ readHall(); });
 
 //Tareas output
 AsyncTask task_blink_led(1000, true, blinkLed);
+AsyncTask task_buzz_alarma(500, true, buzzAlarma);
 
 // Funciones contadoras de tiempo
 bool contar100ms() {
   return task_100_ms.GetElapsedTime() >= task_100_ms.Interval;
+}
+
+bool contar200ms() {
+  return task_200_ms.GetElapsedTime() >= task_200_ms.Interval;
 }
 
 bool contar300ms() {

@@ -22,6 +22,7 @@ extern bool claveCorrecta;
 extern bool sistemaBloqueado;
 extern bool botonPresionado;
 extern bool intruso;
+extern bool alarma;
 extern int EEAddress;
 
 extern short contadorPuertas;

@@ -112,7 +112,7 @@ void onEnterBLOQUEO()
 void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
-  lcdPrint("E: MONITOR_AMBIENTAL", 0, 0, true);
+  lcdPrint("E: MONITOR AMBIENTAL", 0, 0, true);
 
   task_5_sec.Start();
   task_read_temp.Start();
@@ -143,6 +143,8 @@ void onEnterALARMA()
   lcdPrint("E: ALARMA", 0, 0, true);
   contadorPuertas = 0;
   contadorAlarmas++;
+  alarma = true;
+
   if (intruso) {
     task_4_sec.Start();
     Serial.println("Viniendo de PUERTAS - CONTAR 4 SEGUNDOS");
@@ -150,8 +152,14 @@ void onEnterALARMA()
     task_3_sec.Start();
     Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
   }
-  buzzAlarma();
+
+  task_buzz_alarma.Start();
   task_blink_led.Start();
+
+  while (!contar4Segundos() || !contar3Segundos()) {
+    task_buzz_alarma.Update();
+    task_blink_led.Update();
+  }
 }
 
 // Funciones de SALIDA

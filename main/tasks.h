@@ -23,8 +23,10 @@ extern AsyncTask task_read_sonido;
 extern AsyncTask task_read_hall;
 
 extern AsyncTask task_blink_led;
+extern AsyncTask task_buzz_alarma;  
 
 bool contar100ms();
+bool contar200ms();
 bool contar300ms();
 bool contar700ms();
 bool contar2Segundos();

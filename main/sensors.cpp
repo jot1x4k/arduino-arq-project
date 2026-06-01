@@ -26,7 +26,7 @@ float readTemp() {
   temperatura = temperatura - 273.15;
   Serial.println(temperatura);
   
-  lcdPrint("T: " + String(temperatura) + "C", 1, 0, false);
+  lcdPrint("T: " + String(temperatura), 1, 0, false);
 
   return temperatura;
 }
@@ -62,16 +62,30 @@ short readSonido() {
 }
 
 void blinkLed() {
-  task_300_ms.Start();
-  while (!contar300ms()) {
-    digitalWrite(LED_RED, HIGH);
-    Serial.println("LED ON");
-  }
-  
-  task_700_ms.Start();
-  while (!contar700ms()) {
-    digitalWrite(LED_RED, LOW);
-    Serial.println("LED OFF");
+  if(alarma) {
+    task_100_ms.Start();
+    while (!contar100ms()) {
+      digitalWrite(LED_RED, HIGH);
+      Serial.println("LED ON");
+    }
+    
+    task_200_ms.Start();
+    while (!contar200ms()) {
+      digitalWrite(LED_RED, LOW);
+      Serial.println("LED OFF");
+    }
+  } else {
+    task_300_ms.Start();
+    while (!contar300ms()) {
+      digitalWrite(LED_RED, HIGH);
+      Serial.println("LED ON");
+    }
+    
+    task_700_ms.Start();
+    while (!contar700ms()) {
+      digitalWrite(LED_RED, LOW);
+      Serial.println("LED OFF");
+    }
   }
 }
 

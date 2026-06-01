@@ -9,6 +9,7 @@ bool claveCorrecta = false;
 bool sistemaBloqueado = false;
 bool botonPresionado = false;
 bool intruso = false;
+bool alarma = false;
 int EEAddress = 0;
 
 int TEMP_HIGH = 23;
