@@ -153,6 +153,8 @@ void onEnterALARMA()
     Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
   }
 
+  lcdPrint("ALAR: " + String(contadorAlarmas), 1, 0, false);
+
   task_buzz_alarma.Start();
   task_blink_led.Start();
 
@@ -224,7 +226,7 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(MONITOR_PUERTAS, ALARMA, [] { return intruso; }); 
   sm.AddTransition(MONITOR_PUERTAS, MONITOR_AMBIENTAL,[] { return contar2Segundos(); });
 
-  sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura > 24 && luz < 800); });
+  sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura < TEMP_HIGH && luz > LIGHT_HIGH); });
   sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
 
   sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return !intruso && contar3Segundos(); });
