@@ -10,5 +10,6 @@ short readLuz();
 short readSonido();
 void blinkLed();
 void rotateServo(unsigned short direction);
+void buzzAlarma();
 
 #endif

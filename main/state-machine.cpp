@@ -150,7 +150,7 @@ void onEnterALARMA()
     task_3_sec.Start();
     Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
   }
-  tone(BUZZER_PIN, 1000, 500);
+  buzzAlarma();
   task_blink_led.Start();
 }
 

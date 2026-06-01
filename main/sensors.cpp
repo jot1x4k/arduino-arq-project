@@ -94,3 +94,11 @@ void rotateServo(unsigned short direction) {
     }
   }
 }
+
+void buzzAlarma() {
+  task_700_ms.Start();
+  while (!contar700ms()) {
+    tone(BUZZER_PIN, 4000);
+  }
+  tone(BUZZER_PIN, 1000, 1000);
+}
