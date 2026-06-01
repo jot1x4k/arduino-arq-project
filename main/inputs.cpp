@@ -27,10 +27,9 @@ char readKeypadInput()
     Serial.print(key);
     if (key != '#') {
       if(contadorKeypad < 1) {
-        lcdPrint("                 ", 1, false);
+        lcdPrint("                 ", 1, 0, false);
       }
-      lcd.setCursor(contadorKeypad, 1);
-      lcd.print("*");
+      lcdPrint("*", 1, contadorKeypad, false);
       if (contadorKeypad < 4) {
         entradaKeypad[contadorKeypad] = key;
         contadorKeypad++;
@@ -60,16 +59,16 @@ char readKeypadInput()
         intentos = 0; 
       } else {
         Serial.println("Clave incorrecta");
-        lcdPrint("Clave incorrecta", 0, true);
-        lcdPrint("Intentos: " + String(3 - intentos), 1, false);
+        lcdPrint("Clave incorrecta", 0, 0, true);
+        lcdPrint("Intentos: " + String(3 - intentos), 1, 0, false);
         
         task_2_sec.Start();
         while(!contar2Segundos()) {
           task_2_sec.Update();
         }
         if (contar2Segundos()) {
-          lcdPrint("E: INICIO", 0, true);
-          lcdPrint("Dig. Clave/RFID", 1, false);
+          lcdPrint("E: INICIO", 0, 0, true);
+          lcdPrint("Dig. Clave/RFID", 1, 0, false);
         }
       }
     }
@@ -85,7 +84,7 @@ char readKeypadGestion() {
   if (key) {
     tecla = key;
     Serial.print(key);
-    lcdPrint(String(key), 1, false);
+    lcdPrint(String(key), 1, 0, false);
   }
   return key;
 }
@@ -114,15 +113,15 @@ void readRFIDInput()
         sistemaBloqueado = true;
         intentos = 0;
       } else {
-        lcdPrint("RFID no reconocido", 0, true);
-        lcdPrint("Intentos: " + String(3 - intentos), 1, false);
+        lcdPrint("RFID no reconocido", 0, 0, true);
+        lcdPrint("Intentos: " + String(3 - intentos), 1, 0, false);
         task_2_sec.Start();
         while(!contar2Segundos()) {
           task_2_sec.Update();
         }
         if (contar2Segundos()) {
-          lcdPrint("E: INICIO", 0, true);
-          lcdPrint("Dig. Clave/RFID", 1, false);
+          lcdPrint("E: INICIO", 0, 0, true);
+          lcdPrint("Dig. Clave/RFID", 1, 0, false);
         }
       }
     }
@@ -137,11 +136,11 @@ void updateButtonState()
 
 // Funciones auxiliares
 
-void lcdPrint(const String &message, char pos, char clear) {
+void lcdPrint(const String &message, short fil, short col, char clear) {
   if (clear) {
     lcd.clear();
   }
-  lcd.setCursor(0, pos);
+  lcd.setCursor(col, fil);
   lcd.print(message);
 }
 
@@ -149,8 +148,8 @@ void cambiarUmbrales() {
   Serial.println("Opción A - Cambiar umbrales");
   Serial.println("Ingrese nuevo umbral de temperatura: ");
 
-  lcdPrint("TEMP act: " + String(TEMP_HIGH), 0, true);
-  lcdPrint("TEMP nuevo: ", 1, false);
+  lcdPrint("TEMP act: " + String(TEMP_HIGH), 0, 0, true);
+  lcdPrint("TEMP nuevo: ", 1, 0, false);
 
   while (true) {
     char key = readKeypadGestion();
@@ -174,8 +173,8 @@ void cambiarUmbrales() {
 
   Serial.println("Ingrese nuevo umbral de luz: ");
 
-  lcdPrint("Luz act: " + String(LIGHT_HIGH), 0, true);
-  lcdPrint("Luz nuevo: ", 1, false);
+  lcdPrint("Luz act: " + String(LIGHT_HIGH), 0, 0, true);
+  lcdPrint("Luz nuevo: ", 1, 0, false);
   
   while (true) {
     char key = readKeypadGestion();
@@ -197,15 +196,15 @@ void cambiarUmbrales() {
     }
   }
 
-  lcdPrint("UMBRAL ACTUALIZADO", 0, true);
-  lcdPrint("TEMP: " + String(TEMP_HIGH) + " LUZ: " + String(LIGHT_HIGH), 1, false);
+  lcdPrint("UMBRAL ACTUALIZADO", 0, 0, true);
+  lcdPrint("TEMP: " + String(TEMP_HIGH) + " LUZ: " + String(LIGHT_HIGH), 1, 0, false);
 }
 
 void cambiarAcceso() {
   Serial.println("Opción B - Cambiar acceso");
   Serial.println("Ingrese nueva clave de 4 dígitos:");
 
-  lcdPrint("Ingrese 4 dígitos", 0, true);
+  lcdPrint("Ingrese 4 dígitos", 0, 0, true);
 
   for (int i = 0; i < 4; i++) {
     while (true) {
@@ -213,11 +212,11 @@ void cambiarAcceso() {
       if (key && key != '#' && key != '*') {
         claveKeypad[i] = key;
         Serial.print("*");
-        lcdPrint("*", 1, false);
+        lcdPrint("*", 1, 0, false);
         break;
       }
     }
   }
   Serial.println("\nClave actualizada");
-  lcdPrint("Clave actualizada", 0, true);
+  lcdPrint("Clave actualizada", 0, 0, true);
 }

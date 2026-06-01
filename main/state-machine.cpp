@@ -8,7 +8,7 @@
 // Funciones de ENTRADA
 void onEnterCONFIG() { 
   Serial.println("Estado: CONFIG - Cargando EEPROM"); 
-  lcdPrint("E: CONFIG", 0, true);
+  lcdPrint("E: CONFIG", 0, 0, true);
 }
 
 void onEnterINICIO() {
@@ -22,8 +22,8 @@ void onEnterINICIO() {
   task_read_keypad.Start();
 
   Serial.println("Estado: INICIO - Teclado/RFID activo");
-  lcdPrint("E: INICIO", 0, true);
-  lcdPrint("Dig. Clave/RFID", 1, false);
+  lcdPrint("E: INICIO", 0, 0, true);
+  lcdPrint("Dig. Clave/RFID", 1, 0, false);
 }
 
 void onEnterMONITOR_PUERTAS() {
@@ -33,7 +33,7 @@ void onEnterMONITOR_PUERTAS() {
   contadorPuertas++;
 
   Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
-  lcdPrint("E: MONITOR_PUERTAS", 0, true);
+  lcdPrint("E: MONITOR_PUERTAS", 0, 0, true);
 
   Serial.println("Se ha entrado a puertas " + String(contadorPuertas) + " veces");
 
@@ -57,8 +57,8 @@ void onEnterGESTION() {
   Serial.println("*. Volver a INICIO");
   Serial.println("Ingrese opción: ");
 
-  lcdPrint("E: GESTION A:Umbrales", 0, true);
-  lcdPrint("B:Acceso *:Inicio", 1, false);
+  lcdPrint("E: GESTION A:Umbrales", 0, 0, true);
+  lcdPrint("B:Acceso *:Inicio", 1, 0, false);
 
   task_read_keypad_gestion.Start();
   char key = 0;
@@ -95,8 +95,8 @@ void onEnterGESTION() {
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
-  lcdPrint("E: BLOQUEO", 0, true);
-  lcdPrint("Espere...", 1, false);
+  lcdPrint("E: BLOQUEO", 0, 0, true);
+  lcdPrint("Espere...", 1, 0, false);
 
   task_blink_led.Start();
   task_7_sec.Start();
@@ -110,7 +110,7 @@ void onEnterBLOQUEO()
 void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
-  lcdPrint("E: MONITOR_AMBIENTAL", 0, true);
+  lcdPrint("E: MONITOR_AMBIENTAL", 0, 0, true);
 
   task_5_sec.Start();
   task_read_temp.Start();
@@ -138,7 +138,7 @@ void onEnterMONITOR_AMBIENTAL()
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
-  lcdPrint("E: ALARMA", 0, true);
+  lcdPrint("E: ALARMA", 0, 0, true);
   contadorPuertas = 0;
   contadorAlarmas++;
   if (intruso) {

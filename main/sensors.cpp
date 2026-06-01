@@ -26,7 +26,7 @@ float readTemp() {
   temperatura = temperatura - 273.15;
   Serial.println(temperatura);
   
-  lcdPrint("T: " + String(temperatura) + "C", 1, false);
+  lcdPrint("T: " + String(temperatura) + "C", 1, 0, false);
 
   return temperatura;
 }
@@ -36,7 +36,7 @@ short readHall() {
   hall = analogRead(PIN_HALL); 
   Serial.println(hall);
 
-  lcdPrint("H: " + String(hall), 1, false);
+  lcdPrint("H: " + String(hall), 1, 0, false);
   
   return hall; 
 }
@@ -46,8 +46,7 @@ short readLuz() {
   luz =  analogRead(PIN_LUZ); 
   Serial.println(luz);
 
-  lcd.setCursor(9, 1);
-  lcd.print(" L: " + String(luz));
+  lcdPrint("L: " + String(luz), 1, 9, false);
 
   return luz; 
 }
@@ -57,7 +56,7 @@ short readSonido() {
   sonido = analogRead(PIN_SONIDO); 
   Serial.println(sonido);
 
-  lcdPrint("S: " + String(sonido), 1, false);
+  lcdPrint("S: " + String(sonido), 1, 9, false);
 
   return sonido; 
 }
