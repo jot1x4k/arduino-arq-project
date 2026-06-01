@@ -26,6 +26,11 @@ char readKeypadInput()
     tecla = key;
     Serial.print(key);
     if (key != '#') {
+      if(contadorKeypad < 1) {
+        lcdPrint("                 ", 1, false);
+      }
+      lcd.setCursor(contadorKeypad, 1);
+      lcd.print("*");
       if (contadorKeypad < 4) {
         entradaKeypad[contadorKeypad] = key;
         contadorKeypad++;
