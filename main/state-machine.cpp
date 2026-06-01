@@ -75,10 +75,12 @@ void onEnterGESTION() {
   {
   case 'A':
       cambiarUmbrales();
+      stateMachine.SetState(GESTION, false, true);
     break;
 
   case 'B':
       cambiarAcceso();
+      stateMachine.SetState(GESTION, false, true);
     break;
   
   case '*':
@@ -175,7 +177,7 @@ void onLeaveMONITOR_PUERTAS() {
 
 void onLeaveGESTION() { 
   Serial.println("Saliendo de GESTION"); 
-  task_read_keypad.Stop();
+  task_read_keypad_gestion.Stop();
 }
 
 void onLeaveBLOQUEO() { 

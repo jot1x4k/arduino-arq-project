@@ -84,7 +84,9 @@ char readKeypadGestion() {
   if (key) {
     tecla = key;
     Serial.print(key);
-    lcdPrint(String(key), 1, 0, false);
+    if (key != '#' && key != '*' && key != 'A' && key != 'B') {
+       lcdPrint(String(key), 1, 0, false);
+    }
   }
   return key;
 }
@@ -148,75 +150,142 @@ void cambiarUmbrales() {
   Serial.println("Opción A - Cambiar umbrales");
   Serial.println("Ingrese nuevo umbral de temperatura: ");
 
-  lcdPrint("TEMP act: " + String(TEMP_HIGH), 0, 0, true);
-  lcdPrint("TEMP nuevo: ", 1, 0, false);
+  lcdPrint("T act: " + String(TEMP_HIGH), 0, 0, true);
+  lcdPrint("T nuevo: ", 1, 0, false);
 
+  String input = "";
   while (true) {
-    char key = readKeypadGestion();
-    if (key && key != '#' && key != '*') {
-      Serial.print(key);
-      task_2_sec.Start();
-      String input = "";
-      while (!contar2Segundos)
-      {
+    char key = keypad.getKey();
+    if (key) {
+      if (key >= '0' && key <= '9') {
         input += key;
-      }
-      
-      if(contar2Segundos()) {
-        TEMP_HIGH = strtol(input.c_str(), NULL, 10);
-        Serial.println("Nuevo TEMP: " + String(TEMP_HIGH));
+        Serial.print(key);
+        lcdPrint("T nuevo: " + input, 1, 0, false);
+        
+        task_2_sec.Start();
+        task_2_sec.Reset();
+        
+        while (true) {
+          task_2_sec.Update();
+          
+          if (contar2Segundos()) {
+            break;
+          }
+          
+          char nextKey = keypad.getKey();
+          if (nextKey) {
+            if (nextKey >= '0' && nextKey <= '9') {
+              input += nextKey;
+              Serial.print(nextKey);
+              lcdPrint("T nuevo: " + input, 1, 0, false);
+              task_2_sec.Start();
+              task_2_sec.Reset();
+            } else if (nextKey == '#') {
+              break;
+            } else if (nextKey == '*') {
+              input = "";
+              break;
+            }
+          }
+        }
+        break;
+      } else if (key == '*') {
         break;
       }
-      break;
     }
+  }
+
+  if (input.length() > 0) {
+    TEMP_HIGH = strtol(input.c_str(), NULL, 10);
+    Serial.println("\nNuevo TEMP: " + String(TEMP_HIGH));
   }
 
   Serial.println("Ingrese nuevo umbral de luz: ");
 
-  lcdPrint("Luz act: " + String(LIGHT_HIGH), 0, 0, true);
-  lcdPrint("Luz nuevo: ", 1, 0, false);
-  
+  lcdPrint("L act: " + String(LIGHT_HIGH), 0, 0, true);
+  lcdPrint("L nuevo: ", 1, 0, false);
+
+  input = "";
   while (true) {
-    char key = readKeypadGestion();
-    if (key && key != '#' && key != '*') {
-      Serial.print(key);
-      task_2_sec.Start();
-      String input = "";
-      while (!contar2Segundos)
-      {
+    char key = keypad.getKey();
+    if (key) {
+      if (key >= '0' && key <= '9') {
         input += key;
-      }
-      
-      if(contar2Segundos()) {
-        LIGHT_HIGH = strtol(input.c_str(), NULL, 10);
-        Serial.println("Nueva LUZ: " + String(LIGHT_HIGH));
+        Serial.print(key);
+        lcdPrint("L nuevo: " + input, 1, 0, false);
+        
+        task_2_sec.Start();
+        task_2_sec.Reset();
+        
+        while (true) {
+          task_2_sec.Update();
+          
+          if (contar2Segundos()) {
+            break;
+          }
+          
+          char nextKey = keypad.getKey();
+          if (nextKey) {
+            if (nextKey >= '0' && nextKey <= '9') {
+              input += nextKey;
+              Serial.print(nextKey);
+              lcdPrint("L nuevo: " + input, 1, 0, false);
+              task_2_sec.Start();
+              task_2_sec.Reset();
+            } else if (nextKey == '#') {
+              break;
+            } else if (nextKey == '*') {
+              input = "";
+              break;
+            }
+          }
+        }
+        break;
+      } else if (key == '*') {
         break;
       }
-      break;
     }
   }
 
+  if (input.length() > 0) {
+    LIGHT_HIGH = strtol(input.c_str(), NULL, 10);
+    Serial.println("\nNueva LUZ: " + String(LIGHT_HIGH));
+  }
+
   lcdPrint("UMBRAL ACTUALIZADO", 0, 0, true);
-  lcdPrint("TEMP: " + String(TEMP_HIGH) + " LUZ: " + String(LIGHT_HIGH), 1, 0, false);
+  lcdPrint("T: " + String(TEMP_HIGH) + " L: " + String(LIGHT_HIGH), 1, 0, false);
+
+  task_2_sec.Start();
+  task_2_sec.Reset();
+  while (!contar2Segundos()) {
+    task_2_sec.Update();
+  }
 }
 
 void cambiarAcceso() {
   Serial.println("Opción B - Cambiar acceso");
   Serial.println("Ingrese nueva clave de 4 dígitos:");
 
-  lcdPrint("Ingrese 4 dígitos", 0, 0, true);
+  lcdPrint("Ingrese 4 dig", 0, 0, true);
+  lcdPrint("                ", 1, 0, false);
 
   for (int i = 0; i < 4; i++) {
     while (true) {
-      char key = readKeypadGestion();
-      if (key && key != '#' && key != '*') {
+      char key = keypad.getKey();
+      if (key && key >= '0' && key <= '9') {
         claveKeypad[i] = key;
         Serial.print("*");
-        lcdPrint("*", 1, 0, false);
+        lcdPrint("*", 1, i, false);
         break;
       }
     }
   }
   Serial.println("\nClave actualizada");
   lcdPrint("Clave actualizada", 0, 0, true);
+
+  task_2_sec.Start();
+  task_2_sec.Reset();
+  while (!contar2Segundos()) {
+    task_2_sec.Update();
+  }
 }
