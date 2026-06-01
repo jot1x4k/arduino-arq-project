@@ -26,6 +26,6 @@ unsigned short intentos = 0;
 unsigned short puertaServo = 0;
 
 char claveKeypad[4] = {'1', '2', '3', 'A'};
-byte validKeyRFID[4] = { 0xF3, 0xAF, 0x2B, 0x27 };
+byte validKeyRFID[4] = { 0x3A, 0xD4, 0xA8, 0x00 }; 
 
 Servo myservo;

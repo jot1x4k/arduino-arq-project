@@ -40,12 +40,14 @@ short readHall() {
   
   return hall; 
 }
+
 short readLuz() { 
   Serial.println("Luz: ");
   luz =  analogRead(PIN_LUZ); 
   Serial.println(luz);
 
-  lcdPrint("L: " + String(luz), 1, false);
+  lcd.setCursor(9, 1);
+  lcd.print(" L: " + String(luz));
 
   return luz; 
 }
