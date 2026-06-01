@@ -9,7 +9,6 @@
 #include "inputs.h"
 #include "tasks.h"
 
-LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 StateMachine stateMachine(7, 13);
 
 void setup()
@@ -23,7 +22,7 @@ void setup()
   myservo.attach(PIN_SERVO);
   lcd.begin(16, 2);
   
-  stateMachine.SetState(GESTION, false, true);
+  stateMachine.SetState(INICIO, false, true);
 }
 
 void loop()

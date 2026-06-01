@@ -8,27 +8,33 @@
 // Funciones de ENTRADA
 void onEnterCONFIG() { 
   Serial.println("Estado: CONFIG - Cargando EEPROM"); 
+  lcdPrint("E: CONFIG", 0, true);
 }
 
 void onEnterINICIO() {
   tecla = 0;
   contadorKeypad = 0;
-  Serial.println("Estado: INICIO - Teclado/RFID activo");
+
   claveCorrecta = false;
   sistemaBloqueado = false;
 
   task_read_RFID.Start();
   task_read_keypad.Start();
 
-  Serial.print("Ingrese clave: ");
+  Serial.println("Estado: INICIO - Teclado/RFID activo");
+  lcdPrint("E: INICIO", 0, true);
+  lcdPrint("Dig. Clave/RFID", 1, false);
 }
 
 void onEnterMONITOR_PUERTAS() {
-  Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
   task_2_sec.Start();
   task_read_hall.Start();
   task_read_sonido.Start();
   contadorPuertas++;
+
+  Serial.println("Estado: MONITOR_PUERTAS - Sensores activos");
+  lcdPrint("E: MONITOR_PUERTAS", 0, true);
+
   Serial.println("Se ha entrado a puertas " + String(contadorPuertas) + " veces");
 
   while (!contar2Segundos()) {
@@ -44,12 +50,15 @@ void onEnterMONITOR_PUERTAS() {
 }
 
 void onEnterGESTION() { 
-  Serial.println("Estado: GESTION - Configuración"); 
+  Serial.println("Estado: GESTION - Configuración");
 
   Serial.println("A. Cambiar Umbrales");
   Serial.println("B. Cambiar Acceso");
   Serial.println("*. Volver a INICIO");
   Serial.println("Ingrese opción: ");
+
+  lcdPrint("E: GESTION A:Umbrales", 0, true);
+  lcdPrint("B:Acceso *:Inicio", 1, false);
 
   task_read_keypad_gestion.Start();
   char key = 0;
@@ -65,43 +74,11 @@ void onEnterGESTION() {
   switch (tecla)
   {
   case 'A':
-    Serial.println("Opción A - Cambiar umbrales");
-    Serial.println("Ingrese nuevo umbral de temperatura: ");
-    while (true) {
-      char key = readKeypadGestion();
-      if (key && key != '#' && key != '*') {
-        Serial.print(key);
-        task_2_sec.Start();
-        String input = "";
-        while (!contar2Segundos)
-        {
-          input += key;
-        }
-        
-        if(contar2Segundos()) {
-          TEMP_HIGH = strtol(input.c_str(), NULL, 10);
-          Serial.println("Nuevo TEMP: " + String(TEMP_HIGH));
-          break;
-        }
-        break;
-      }
-    }
+      cambiarUmbrales();
     break;
 
   case 'B':
-    Serial.println("Opción B - Cambiar acceso");
-    Serial.println("Ingrese nueva clave de 4 dígitos:");
-    for (int i = 0; i < 4; i++) {
-      while (true) {
-        char key = readKeypadGestion();
-        if (key && key != '#' && key != '*') {
-          claveKeypad[i] = key;
-          Serial.print("*");
-          break;
-        }
-      }
-    }
-    Serial.println("\nClave actualizada");
+      cambiarAcceso();
     break;
   
   case '*':
@@ -118,6 +95,8 @@ void onEnterGESTION() {
 void onEnterBLOQUEO()
 {
   Serial.println("Estado: BLOQUEO - Sistema bloqueado");
+  lcdPrint("E: BLOQUEO", 0, true);
+  lcdPrint("Espere...", 1, false);
 
   task_blink_led.Start();
   task_7_sec.Start();
@@ -131,9 +110,12 @@ void onEnterBLOQUEO()
 void onEnterMONITOR_AMBIENTAL()
 {
   Serial.println("Estado: MONITOR_AMBIENTAL - Sensores ambientales");
+  lcdPrint("E: MONITOR_AMBIENTAL", 0, true);
+
   task_5_sec.Start();
   task_read_temp.Start();
   task_read_luz.Start();
+
 
   if(puertaServo == 0) {
     rotateServo(0);
@@ -156,9 +138,9 @@ void onEnterMONITOR_AMBIENTAL()
 void onEnterALARMA()
 {
   Serial.println("Estado: ALARMA - Activada");
+  lcdPrint("E: ALARMA", 0, true);
   contadorPuertas = 0;
   contadorAlarmas++;
-  Serial.println("INTRUSO ES: " + String(intruso));
   if (intruso) {
     task_4_sec.Start();
     Serial.println("Viniendo de PUERTAS - CONTAR 4 SEGUNDOS");

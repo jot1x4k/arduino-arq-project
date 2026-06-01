@@ -31,6 +31,6 @@ bool contar2Segundos();
 bool contar3Segundos();
 bool contar4Segundos();
 bool contar5Segundos();
-bool contar7Segundos();
+bool contar7Segundos(); 
 
 #endif

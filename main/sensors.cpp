@@ -2,6 +2,7 @@
 #include "hardware-config.h"
 #include "globals.h"
 #include "tasks.h" 
+#include "inputs.h"
 
 void sensorSetup() {
   pinMode(PIN_TEMP, INPUT);
@@ -24,6 +25,9 @@ float readTemp() {
   temperatura = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
   temperatura = temperatura - 273.15;
   Serial.println(temperatura);
+  
+  lcdPrint("T: " + String(temperatura) + "C", 1, false);
+
   return temperatura;
 }
 
@@ -31,12 +35,18 @@ short readHall() {
   Serial.println("Hall: ");
   hall = analogRead(PIN_HALL); 
   Serial.println(hall);
+
+  lcdPrint("H: " + String(hall), 1, false);
+  
   return hall; 
 }
 short readLuz() { 
   Serial.println("Luz: ");
   luz =  analogRead(PIN_LUZ); 
   Serial.println(luz);
+
+  lcdPrint("L: " + String(luz), 1, false);
+
   return luz; 
 }
 
@@ -44,6 +54,9 @@ short readSonido() {
   Serial.println("Sonido: ");
   sonido = analogRead(PIN_SONIDO); 
   Serial.println(sonido);
+
+  lcdPrint("S: " + String(sonido), 1, false);
+
   return sonido; 
 }
 
