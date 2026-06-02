@@ -23,10 +23,26 @@ char entradaKeypad[4];
 unsigned short aciertos = 0;
 unsigned short intentos = 0;
 
-
 unsigned short puertaServo = 0;
+
+Perfil perfil;
 
 char claveKeypad[4] = {'1', '2', '3', 'A'};
 byte validKeyRFID[4] = { 0x3A, 0xD4, 0xA8, 0x00 }; 
 
 Servo myservo;
+
+short current_id = 0;
+
+void crearPerfil(const char clave[4], const byte rfid[4], const unsigned short horario[2]) {
+    Perfil p;
+    p.id = current_id;
+    p.nombre = "Usuario" + String(current_id);
+    memcpy(p.clave, clave, 4);
+    memcpy(p.rfid, rfid, 4);
+    memcpy(p.horario, horario, 2 * sizeof(unsigned short));
+    
+    int address = current_id * sizeof(Perfil);
+    EEPROM.put(address, p);
+    current_id++;
+}

@@ -7,6 +7,7 @@
 #include <MFRC522.h>
 #include "StateMachineLib.h"
 #include "AsyncTaskLib.h"
+#include <EEPROM.h>
 
 extern LiquidCrystal lcd;
 extern Servo myservo;
@@ -41,5 +42,19 @@ extern unsigned short puertaServo;
 
 extern char claveKeypad[4];
 extern byte validKeyRFID[4];
+
+extern short current_id;
+
+struct Perfil
+{
+    short id;
+    String nombre;
+    char clave[4];
+    byte rfid[4];
+    unsigned short horario[2];
+};
+
+extern void crearPerfil(const char clave[], const byte rfid[], const unsigned short horario[]);
+
 
 #endif

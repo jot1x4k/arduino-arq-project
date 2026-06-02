@@ -24,4 +24,7 @@ void onLeaveBLOQUEO();
 void onLeaveMONITOR_AMBIENTAL();
 void onLeaveALARMA();
 
+void configCrear();
+void configMostrar();
+
 #endif

@@ -9,6 +9,36 @@
 void onEnterCONFIG() { 
   Serial.println("Estado: CONFIG - Cargando EEPROM"); 
   lcdPrint("E: CONFIG", 0, 0, true);
+
+  Serial.println("A. Crear perfil");
+  Serial.println("B. Mostrar perfiles");
+
+  lcdPrint("A: Crear ", 1, 0, false);
+  lcdPrint("B: Mostrar", 1, 10, false);
+
+  char key = 0;
+  while (true) {
+    key = readKeypadGestion();
+    if (key) {
+      break;
+    }
+  }
+
+  switch (key)
+  {
+    case 'A':
+      configCrear();
+    break;
+    case 'B':
+      configMostrar();
+    break;
+
+    default:
+      Serial.println("Opción no válida");
+      stateMachine.SetState(CONFIG, false, true);
+      break;
+  }
+  
 }
 
 void onEnterINICIO() {
@@ -51,6 +81,7 @@ void onEnterMONITOR_PUERTAS() {
 
 void onEnterGESTION() { 
   Serial.println("Estado: GESTION - Configuración");
+  contadorAlarmas = 0;
 
   Serial.println("A. Cambiar Umbrales");
   Serial.println("B. Cambiar Acceso");
@@ -145,22 +176,25 @@ void onEnterALARMA()
   contadorAlarmas++;
   alarma = true;
 
-  if (intruso) {
-    task_4_sec.Start();
-    Serial.println("Viniendo de PUERTAS - CONTAR 4 SEGUNDOS");
-  } else {
-    task_3_sec.Start();
-    Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
-  }
-
   lcdPrint("ALAR: " + String(contadorAlarmas), 1, 0, false);
 
   task_buzz_alarma.Start();
   task_blink_led.Start();
 
-  while (!contar4Segundos() || !contar3Segundos()) {
-    task_buzz_alarma.Update();
-    task_blink_led.Update();
+  if (intruso) {
+    task_4_sec.Start();
+    Serial.println("Viniendo de PUERTAS - CONTAR 4 SEGUNDOS");
+    while (!contar4Segundos()) {
+      task_buzz_alarma.Update();
+      task_blink_led.Update();
+    }
+  } else {
+    task_3_sec.Start();
+    Serial.println("Viniendo de AMBIENTAL - CONTAR 3 SEGUNDOS");
+    while (!contar3Segundos()) {
+      task_buzz_alarma.Update();
+      task_blink_led.Update();
+    }
   }
 }
 
@@ -229,9 +263,9 @@ void setupStateMachine(StateMachine &sm)
   sm.AddTransition(MONITOR_AMBIENTAL, ALARMA, [] { return (temperatura < TEMP_HIGH && luz > LIGHT_HIGH); });
   sm.AddTransition(MONITOR_AMBIENTAL, MONITOR_PUERTAS, [] { return contar5Segundos(); });
 
-  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return !intruso && contar3Segundos(); });
-  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return intruso && contar4Segundos(); });
   sm.AddTransition(ALARMA, GESTION, [] { return contadorAlarmas >= 3; });
+  sm.AddTransition(ALARMA, MONITOR_AMBIENTAL, [] { return !intruso && contar3Segundos() && contadorAlarmas < 3; });
+  sm.AddTransition(ALARMA, MONITOR_PUERTAS, [] { return intruso && contar4Segundos() && contadorAlarmas < 3; });
 
   sm.AddTransition(GESTION, INICIO, [] {
     if (tecla == '*') {
@@ -258,4 +292,80 @@ void setupStateMachine(StateMachine &sm)
   sm.SetOnLeaving(BLOQUEO, onLeaveBLOQUEO);
   sm.SetOnLeaving(MONITOR_AMBIENTAL, onLeaveMONITOR_AMBIENTAL);
   sm.SetOnLeaving(ALARMA, onLeaveALARMA);
+}
+
+void configCrear() {
+  Serial.println("Función configCrear - Crear nuevo perfil");
+  Serial.println("Ingrese clave de 4 dígitos: ");
+  char clave[4];
+  int idx = 0;
+  while (idx < 4) {
+    char key = readKeypadGestion();
+    if (key) {
+      if (key >= '0' && key <= '9') {
+        clave[idx] = key;
+        Serial.print(key);
+        lcdPrint("Clave: ****", 1, 0, false);
+        idx++;
+      }
+    }
+  }
+
+  Serial.println("\nAcerque RFID para registrar: ");
+  byte rfid[4];
+  while (true) {
+    if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
+      for (byte i = 0; i < 4; i++) {
+        rfid[i] = mfrc522.uid.uidByte[i];
+        Serial.print(rfid[i], HEX);
+        Serial.print(" ");
+      }
+      break;
+    }
+  }
+
+  Serial.println("\nIngrese horario permitido (HHMM-HHMM): ");
+  unsigned short horario[2];
+  for (int i = 0; i < 2; i++) {
+    char timeStr[5] = {0};
+    int j = 0;
+    while (j < 4) {
+      char key = readKeypadGestion();
+      if (key) {
+        if (key >= '0' && key <= '9') {
+          timeStr[j] = key;
+          Serial.print(key);
+          lcdPrint((i == 0 ? "Inicio: " : "Fin: ") + String(timeStr), 1, 0, false);
+          j++;
+        }
+      }
+    }
+    horario[i] = atoi(timeStr);
+  }
+
+  crearPerfil(clave, rfid, horario);
+}
+
+void configMostrar() {
+  Serial.println("Función configMostrar - Mostrar perfiles registrados");
+  int numPerfiles = current_id; 
+  for (int i = 0; i < numPerfiles; i++) {
+    Perfil p;
+    int address = i * sizeof(Perfil);
+    EEPROM.get(address, p);
+    Serial.println("ID: " + String(p.id) + " Nombre: " + p.nombre);
+    Serial.print("Clave: ");
+    for (int j = 0; j < 4; j++) {
+      Serial.print(p.clave[j]);
+    }
+    Serial.println();
+    Serial.print("RFID: ");
+    for (int j = 0; j < 4; j++) {
+      Serial.print(p.rfid[j], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+    Serial.println("Horario: " + String(p.horario[0]) + "-" + String(p.horario[1]));
+    Serial.println("-----------------------");
+  }
 }
