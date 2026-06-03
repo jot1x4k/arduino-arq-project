@@ -91,14 +91,7 @@ void blinkLed() {
 
 void rotateServo(unsigned short direction) {
   task_100_ms.Start();
-  if(direction == 0) {
-    myservo.write(0);
-  }
-
-  if (direction == 180)
-  {
-    myservo.write(180);
-  } 
+  myservo.write(direction);
   
   task_300_ms.Start();
   while (!contar300ms())

@@ -374,7 +374,7 @@ void configCrear() {
   crearPerfil(clave, rfid, horario);
 
   Serial.println("Perfil creado exitosamente.");
-  lcdPrint("Perfil Creado!", 0, 0, true);
+  lcdPrint("Perfil Creado", 0, 0, true);
   
   task_2_sec.Start();
   task_2_sec.Reset();
