@@ -18,6 +18,11 @@ void onEnterCONFIG() {
 
   char key = 0;
   while (true) {
+    updateButtonState();
+    if (botonPresionado) {
+      return;
+    }
+    
     key = readKeypadGestion();
     if (key) {
       break;
@@ -28,9 +33,11 @@ void onEnterCONFIG() {
   {
     case 'A':
       configCrear();
+      stateMachine.SetState(CONFIG, false, true);
     break;
     case 'B':
       configMostrar();
+      stateMachine.SetState(CONFIG, false, true);
     break;
 
     default:
@@ -296,22 +303,34 @@ void setupStateMachine(StateMachine &sm)
 
 void configCrear() {
   Serial.println("Función configCrear - Crear nuevo perfil");
-  Serial.println("Ingrese clave de 4 dígitos: ");
+  Serial.println("Ingrese clave de 4 dígitos (Confirme con #, borre con *): ");
   char clave[4];
   int idx = 0;
-  while (idx < 4) {
-    char key = readKeypadGestion();
+  lcdPrint("Clave: ____", 1, 0, false);
+  while (true) {
+    char key = getRawKeypad();
     if (key) {
-      if (key >= '0' && key <= '9') {
+      if (key >= '0' && key <= '9' && idx < 4) {
         clave[idx] = key;
         Serial.print(key);
-        lcdPrint("Clave: ****", 1, 0, false);
+        String asterisks = "Clave: ";
+        for(int k=0; k<=idx; k++) asterisks += "*";
+        for(int k=idx+1; k<4; k++) asterisks += "_";
+        lcdPrint(asterisks, 1, 0, false);
         idx++;
+      } else if (key == '#' && idx == 4) {
+        Serial.println();
+        break;
+      } else if (key == '*') {
+        idx = 0;
+        Serial.print("\nReingrese:");
+        lcdPrint("Clave: ____", 1, 0, false);
       }
     }
   }
 
-  Serial.println("\nAcerque RFID para registrar: ");
+  Serial.println("Acerque RFID para registrar: ");
+  lcdPrint("Acerque RFID", 1, 0, false);
   byte rfid[4];
   while (true) {
     if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
@@ -324,19 +343,28 @@ void configCrear() {
     }
   }
 
-  Serial.println("\nIngrese horario permitido (HHMM-HHMM): ");
+  Serial.println("\nIngrese horario permitido (HHMM-HHMM) Confirme #: ");
   unsigned short horario[2];
   for (int i = 0; i < 2; i++) {
     char timeStr[5] = {0};
     int j = 0;
-    while (j < 4) {
-      char key = readKeypadGestion();
+    lcdPrint(i == 0 ? "Inicio: HHMM" : "Fin: HHMM", 1, 0, false);
+    while (true) {
+      char key = getRawKeypad();
       if (key) {
-        if (key >= '0' && key <= '9') {
+        if (key >= '0' && key <= '9' && j < 4) {
           timeStr[j] = key;
           Serial.print(key);
           lcdPrint((i == 0 ? "Inicio: " : "Fin: ") + String(timeStr), 1, 0, false);
           j++;
+        } else if (key == '#' && j == 4) {
+          Serial.println();
+          break;
+        } else if (key == '*') {
+          j = 0;
+          memset(timeStr, 0, sizeof(timeStr));
+          Serial.print("\nReingrese:");
+          lcdPrint(i == 0 ? "Inicio:     " : "Fin:     ", 1, 0, false);
         }
       }
     }
@@ -344,6 +372,15 @@ void configCrear() {
   }
 
   crearPerfil(clave, rfid, horario);
+
+  Serial.println("Perfil creado exitosamente.");
+  lcdPrint("Perfil Creado!", 0, 0, true);
+  
+  task_2_sec.Start();
+  task_2_sec.Reset();
+  while (!contar2Segundos()) {
+    task_2_sec.Update();
+  }
 }
 
 void configMostrar() {
@@ -351,9 +388,9 @@ void configMostrar() {
   int numPerfiles = current_id; 
   for (int i = 0; i < numPerfiles; i++) {
     Perfil p;
-    int address = i * sizeof(Perfil);
+    int address = EEPROM_PROFILES_OFFSET + (i * sizeof(Perfil));
     EEPROM.get(address, p);
-    Serial.println("ID: " + String(p.id) + " Nombre: " + p.nombre);
+    Serial.println("ID: " + String(p.id) + " Nombre: " + String(p.nombre));
     Serial.print("Clave: ");
     for (int j = 0; j < 4; j++) {
       Serial.print(p.clave[j]);

@@ -37,12 +37,13 @@ short current_id = 0;
 void crearPerfil(const char clave[4], const byte rfid[4], const unsigned short horario[2]) {
     Perfil p;
     p.id = current_id;
-    p.nombre = "Usuario" + String(current_id);
+    snprintf(p.nombre, sizeof(p.nombre), "Usuario%d", current_id);
     memcpy(p.clave, clave, 4);
     memcpy(p.rfid, rfid, 4);
     memcpy(p.horario, horario, 2 * sizeof(unsigned short));
     
-    int address = current_id * sizeof(Perfil);
+    int address = EEPROM_PROFILES_OFFSET + (current_id * sizeof(Perfil));
     EEPROM.put(address, p);
     current_id++;
+    EEPROM.put(EEPROM_CURRENT_ID_OFFSET, current_id);
 }

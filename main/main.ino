@@ -16,6 +16,11 @@ void setup()
   Serial.begin(9600);
   SPI.begin();
   
+  EEPROM.get(EEPROM_CURRENT_ID_OFFSET, current_id);
+  if (current_id < 0 || current_id > 100) {
+    current_id = 0;
+  }
+
   sensorSetup();
   setupStateMachine(stateMachine);
   mfrc522.PCD_Init();

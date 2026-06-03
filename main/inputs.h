@@ -5,6 +5,7 @@
 
 char readKeypadInput();
 char readKeypadGestion();
+char getRawKeypad();
 void readRFIDInput();
 void updateButtonState();
 

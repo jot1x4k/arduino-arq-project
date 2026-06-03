@@ -38,15 +38,30 @@ char readKeypadInput()
   }
   
   if (contadorKeypad == 4) {
-    aciertos = 0;
+    bool valid = false;
 
+    aciertos = 0;
     for(int i = 0; i < 4; i++)  {
       if(claveKeypad[i] == entradaKeypad[i]){
         aciertos++;
       }
     }
+    if (aciertos == 4) {
+      valid = true;
+    }
 
-    if (aciertos == 4){
+    if (!valid) {
+      for (int i = 0; i < current_id; i++) {
+        Perfil p;
+        EEPROM.get(EEPROM_PROFILES_OFFSET + (i * sizeof(Perfil)), p);
+        if (memcmp(p.clave, entradaKeypad, 4) == 0) {
+          valid = true;
+          break;
+        }
+      }
+    }
+
+    if (valid){
       Serial.println("Clave correcta");
       intentos = 0;
       claveCorrecta = true;
@@ -91,6 +106,10 @@ char readKeypadGestion() {
   return key;
 }
 
+char getRawKeypad() {
+  return keypad.getKey();
+}
+
 void readRFIDInput()
 {
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
@@ -102,7 +121,24 @@ void readRFIDInput()
     }
     Serial.println();
     
-    if (mfrc522.uid.size >= 4 && memcmp(id, validKeyRFID, 4) == 0) {
+    bool valid = false;
+
+    if (mfrc522.uid.size >= 4) {
+      if (memcmp(id, validKeyRFID, 4) == 0) {
+        valid = true;
+      } else {
+        for (int i = 0; i < current_id; i++) {
+          Perfil p;
+          EEPROM.get(EEPROM_PROFILES_OFFSET + (i * sizeof(Perfil)), p);
+          if (memcmp(p.rfid, id, 4) == 0) {
+            valid = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (valid) {
       Serial.println(F("RFID válido"));
       claveCorrecta = true;
     } else {

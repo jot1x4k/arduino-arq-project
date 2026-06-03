@@ -9,6 +9,9 @@
 #include "AsyncTaskLib.h"
 #include <EEPROM.h>
 
+#define EEPROM_PROFILES_OFFSET 10
+#define EEPROM_CURRENT_ID_OFFSET 4
+
 extern LiquidCrystal lcd;
 extern Servo myservo;
 extern MFRC522 mfrc522;
@@ -48,7 +51,7 @@ extern short current_id;
 struct Perfil
 {
     short id;
-    String nombre;
+    char nombre[16];
     char clave[4];
     byte rfid[4];
     unsigned short horario[2];
