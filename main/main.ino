@@ -11,6 +11,9 @@
 
 StateMachine stateMachine(7, 13);
 
+/**
+ * @brief Configura el sistema, inicializa la máquina de estados, los sensores, el RFID, el servo y el LCD.
+ */
 void setup()
 {
   Serial.begin(9600);
@@ -30,6 +33,9 @@ void setup()
   stateMachine.SetState(INICIO, false, true);
 }
 
+/**
+ * @brief Bucle principal del programa, actualiza la máquina de estados, el estado del botón y las tareas asíncronas.
+ */
 void loop()
 {
   stateMachine.Update();

@@ -34,6 +34,12 @@ Servo myservo;
 
 short current_id = 0;
 
+/**
+ * @brief Crea un nuevo perfil de usuario y lo almacena en la EEPROM.
+ * @param clave Clave del usuario.
+ * @param rfid Código RFID del usuario.
+ * @param horario Horario permitido del usuario.
+ */
 void crearPerfil(const char clave[4], const byte rfid[4], const unsigned short horario[2]) {
     Perfil p;
     p.id = current_id;
